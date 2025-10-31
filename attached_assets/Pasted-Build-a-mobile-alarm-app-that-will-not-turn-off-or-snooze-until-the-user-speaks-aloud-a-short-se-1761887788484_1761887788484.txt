@@ -1,0 +1,277 @@
+Build a mobile alarm app that will not turn off (or snooze) until the user speaks aloud:
+
+a short set of daily affirmations, and
+
+their custom goals captured during a motivational-interviewing (MI) onboarding.
+
+The app must be robust against cheating (e.g., playing a recording), reliable offline, and compliant with iOS/Android background alarm constraints.
+
+Core User Stories
+
+Set Alarm: As a user, I can create repeating or one-off alarms with tone, volume ramp, vibration, and a maximum snooze limit.
+
+MI Onboarding: As a new user, I’m guided through a 3–5 minute motivational interviewing flow that elicits my goals, values, barriers, and a personal “why”; outputs concise “Goal Lines” and Affirmation Lines for future mornings.
+
+Alarm Trigger: When the alarm fires (even offline / screen off), a full-screen takeover appears with options disabled until successful voice verification.
+
+Voice Completion: I must verbally recite my Affirmation Lines and Goal Lines; the app live-transcribes and verifies content. Only then can I stop or snooze.
+
+Anti-Cheat: App detects obvious playback/faking; optionally injects randomized challenge words the user must include.
+
+Streaks & Review: I can see streaks, completion quality, and a weekly reflection nudge that re-anchors motivation and updates goals.
+
+Platforms & Tech
+
+Mobile: Implement in React Native (preferred) or Flutter with native modules where required.
+
+Local DB: SQLite (WatermelonDB/Drizzle/TypeORM) for alarms, goals, transcripts, streaks.
+
+Speech-to-Text:
+
+iOS: SFSpeechRecognizer (on-device where available) + AVAudioSession + AVAudioEngine.
+
+Android: SpeechRecognizer API or on-device ML Kit; support offline models where possible.
+
+Optional Cloud (flag-gated): fallback STT for low-resource devices; NEVER a hard requirement for wake-time flow.
+
+iOS/Android Alarm Constraints (must-do)
+
+iOS:
+
+Use local notifications with critical alert style only if permissible; otherwise ensure loud, persistent local notification + full-screen intent.
+
+Foreground audio session for the alarm screen; handle Do Not Disturb per Apple policy (cannot bypass without entitlements).
+
+Keep alive using background tasks until user completes voice verification.
+
+Android:
+
+Use AlarmManager with setExactAndAllowWhileIdle() (Android 12+ requires SCHEDULE_EXACT_ALARM or exemption).
+
+Foreground service for alarm UI + audio; request Alarms & Reminders special app access where applicable.
+
+Handle Doze mode and manufacturer battery optimizations; show clear onboarding for “not battery-optimized”.
+
+Ship platform-specific permission screens and fallback behavior if any capability is denied.
+
+Data Model (minimum)
+
+UserProfile: { id, name, timezone, createdAt }
+
+Goals: { id, userId, text, “why”, barriers[], supports[], lastEditedAt }
+
+Affirmations: { id, userId, text, active:boolean, lastEditedAt }
+
+Alarms: { id, label, timeLocal, daysOfWeek[], volume, toneUri, vibrate:boolean, maxSnoozes:int, snoozeLengthMin:int, requireAffirmations:boolean, requireGoals:boolean, randomChallenge:boolean, createdAt }
+
+AlarmRun: { id, alarmId, firedAt, dismissedAt?, snoozesUsed:int, success:boolean, transcriptJson, similarityScores:{affirmations:number, goals:number, challenge:number}, cheatFlags:{playback:boolean, lowEnergy:boolean, micLoop:boolean} }
+
+Streaks: { id, userId, current:int, best:int, updatedAt }
+
+Settings: { id, sttMode:'onDevice'|'cloudFallback', challengeWordCount:int, minSimilarity:number(0–1), ambientThresholdDb:number }
+
+Motivational Interviewing (MI) Onboarding
+
+Flow (3–5 min, friendly tone, progressive disclosure):
+
+Open question: “What’s one meaningful change you want this month?” → capture as raw text.
+
+Importance/Confidence scaling (0–10 sliders) with follow-ups: “Why not lower? What would move you up one point?”
+
+Elicit change talk: “If things went perfectly in 90 days, what’s different?” (benefits), “What gets in the way?” (barriers), “Who/what helps?” (supports).
+
+Summarize & reflect: Show back the distilled statements for edit/confirm.
+
+Generate lines (editable):
+
+Goal Lines (1–3): concise, present-tense, specific.
+
+Affirmation Lines (2–5): identity-based, values-anchored.
+
+Consent & privacy brief specific to microphone usage at wake-time.
+
+Example outputs (stored):
+
+Goal Lines:
+
+“I ship my startup demo by Nov 15.”
+
+“I complete 4 workouts/week.”
+
+Affirmations:
+
+“I keep promises to myself.”
+
+“I make progress even when it’s hard.”
+
+Alarm Flow & Verification Logic
+
+Alarm fires → Full-screen Alarm UI (big Stop/Snooze disabled; shows today’s Goal Lines + a mic waveform).
+
+Prompt sequence (TTS optional):
+
+“Say your affirmations.” → live STT capture (10–20s window).
+
+“Now say your goals.” → capture.
+
+If randomChallenge=true, inject a random word from a daily list (e.g., “include the word: sunrise”).
+
+Verification:
+
+Normalize transcription: lowercase, strip filler, lemmatize.
+
+For each required line, compute similarity against the transcript using:
+
+Token overlap (Jaccard),
+
+Character distance (Levenshtein ratio),
+
+Semantic similarity (small on-device embedding if available; else fallback cosine using a tiny local model or heuristic synonyms list).
+
+Require minSimilarity per line (default 0.72) and overall pass threshold.
+
+Anti-Cheat Heuristics (fail → prompt to retry):
+
+Liveness: require challenge word present; optional randomized order of lines.
+
+Acoustics: check RMS energy and spectral flatness to flag line-level constant spectra typical of playback.
+
+Latency/Envelope: human speech gaps (≥120ms) with prosody variance; fixed envelope suggests playback.
+
+Microphone loop detection: look for narrowband resonance.
+
+Consecutive identical transcripts across days → prompt refresh of lines.
+
+Completion:
+
+If pass → enable Stop; otherwise keep alarm sound at reduced volume while re-prompting.
+
+Snooze available only after partial success (e.g., affirmations done but goals failed) and within maxSnoozes.
+
+UX Requirements
+
+Wake-safe UI: high-contrast, huge buttons, always-on display while active alarm.
+
+Quick Edit: long-press on any line (night-before) to tweak wording.
+
+Accessibility: Dynamic Type / scalable text, VoiceOver/TalkBack labels, haptic confirmations, captions for TTS.
+
+Calm mode: after success, show a 10-second quiet “today’s focus” card.
+
+Failure UX: respectful, non-shaming, offers micro-adjustments (“Shorten your lines?” “Lower similarity threshold by 0.02 today?”).
+
+Privacy & Security
+
+Default on-device transcription; no audio leaves device unless user enables cloud fallback.
+
+Never store raw audio by default; store transcripts + scores only.
+
+Provide data export & wipe.
+
+Comply with GDPR/CCPA principles; clear microphone usage purpose; no third-party analytics without consent.
+
+Analytics (opt-in)
+
+Daily completion rate, time-to-complete, retries, similarity histograms.
+
+Streak length; correlation between alarm time and success.
+
+Acceptance Criteria
+
+Reliability: Alarms trigger on time across iOS/Android with screen off, offline, and battery saver on (given documented permissions).
+
+Voice Gate: ≥95% of genuine recitations pass within 2 attempts; ≥80% of simple playback attempts are blocked by anti-cheat.
+
+MI Quality: Onboarding produces at least 1 Goal Line and 2 Affirmation Lines in under 5 minutes.
+
+Offline: End-to-end alarm + STT works with no network.
+
+Accessibility: Passes basic WCAG mobile checks; TalkBack/VoiceOver reads all actionable elements.
+
+API/Module Sketch (RN example)
+
+modules/alarm/AlarmScheduler.ts
+
+scheduleAlarm(alarm: Alarm)
+
+cancelAlarm(id)
+
+Native bridges: iOS UNUserNotificationCenter + background task; Android AlarmManager + ForegroundService.
+
+modules/audio/Recorder.ts
+
+start/stop stream, RMS, spectral features.
+
+modules/stt/Transcriber.ts
+
+transcribeStream(); strategy picks on-device vs cloud fallback.
+
+modules/verify/Verifier.ts
+
+verify({transcript, goals[], affirmations[], challengeWord?, thresholds}) -> {passed, scores, flags}
+
+modules/mi/Onboarding.tsx
+
+guided flow + summarizer + line generator.
+
+db/schema.ts
+
+tables above; migrations.
+
+modules/anticheat/Heuristics.ts
+
+playback/liveness checks.
+
+Testing Plan
+
+Unit: text normalization, similarity scoring, challenge injection, anti-cheat features.
+
+Instrumented: simulate alarms under Doze/Low Power; rotate device states; revoke mic permission mid-flow.
+
+Audio fixtures: real speech vs phone playback vs speaker playback; ensure differential detection.
+
+Localization: run MI and verification in at least EN + ES (toggle STT locale).
+
+Edge Cases to Handle
+
+Mic permission denied → show one-time bypass (snooze only) and force permission repair before next alarm.
+
+Headphones/Bluetooth route locked → force speaker output or prompt unplug.
+
+Device muted / DND → platform-specific guidance and best-effort audio session.
+
+User changes time zone → alarms migrate using local wall time.
+
+Stretch Goals (nice-to-have)
+
+Widgets/Shortcuts: bedtime prep widget; Siri/Assistant intents.
+
+Smart coach: weekly MI mini-session to refine lines; detect stale goals.
+
+Integrations: Apple Health/Google Fit to tie goals to movement/sleep.
+
+Companion Watch app: alarm acknowledge begins on watch; final voice on phone.
+
+Deliverables
+
+Mobile apps (iOS + Android) with the above features.
+
+README with platform permission steps (DND, exact alarms, battery optimizations).
+
+Test suite + QA checklist.
+
+Product copy for MI onboarding and alarm prompts.
+
+App icons/splash and a minimal design system (light/dark).
+
+Copy Snippets (ship these)
+
+Wake prompt: “Good morning. Say your affirmations now.” → “Now say your goals. Include the word ‘sunrise’.”
+
+Encourager: “Nice—last one, keep going.”
+
+Success: “Done. You kept your promise today.”
+
+Priorities: 1) Alarm reliability, 2) Voice gate accuracy, 3) Anti-cheat, 4) Smooth MI onboarding, 5) Offline first.
+
+Build it.
