@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Affirmation Alarm",
+    "slug": "affirmation-alarm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a2e"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.affirmationalarm.app",
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "This app needs speech recognition to verify your morning affirmations and goals.",
+        "NSMicrophoneUsageDescription": "This app needs microphone access to verify you've spoken your affirmations and goals aloud.",
+        "UIBackgroundModes": ["audio", "processing"],
+        "NSUserNotificationsUsageDescription": "This app uses notifications to wake you up with your personalized alarms."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "package": "com.affirmationalarm.app",
+      "permissions": [
+        "RECORD_AUDIO",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM",
+        "WAKE_LOCK",
+        "VIBRATE",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "FOREGROUND_SERVICE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
