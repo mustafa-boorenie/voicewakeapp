@@ -1,105 +1,135 @@
+import { Platform } from 'react-native';
 import { Alarm } from '../../types';
-import * as Notifications from 'expo-notifications';
+import {
+  addAlarmFiredListener,
+  getNativeAlarmModule,
+  isNativeAlarmModuleAvailable,
+  type AlarmSchedulerEvent,
+  type NativeScheduledAlarm,
+} from '../../native/alarm';
+
+export type AlarmFiredListener = (event: AlarmSchedulerEvent) => void;
+export type AlarmRouteParams = {
+  alarmId: string;
+  requireAffirmations: boolean;
+  requireGoals: boolean;
+  randomChallenge: boolean;
+  label?: string;
+};
 
 export class AlarmScheduler {
+  private native = getNativeAlarmModule();
+
   constructor() {
-    this.configureNotifications();
+    if (!isNativeAlarmModuleAvailable()) {
+      console.warn('AlarmScheduler: native module unavailable on this platform');
+    }
   }
 
-  private configureNotifications() {
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowAlert: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-      }),
-    });
+  addAlarmFiredListener(listener: AlarmFiredListener) {
+    return addAlarmFiredListener(listener);
   }
 
-  async requestPermissions(): Promise<boolean> {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+  async consumePendingAlarm(): Promise<AlarmSchedulerEvent | null> {
+    return this.native.getLastTriggeredAlarm();
+  }
 
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+  async ensurePermissions(): Promise<boolean> {
+    const notificationsGranted = await this.native.ensureNotificationPermission();
+    if (!notificationsGranted) {
+      return false;
     }
 
-    return finalStatus === 'granted';
+    if (Platform.OS === 'android') {
+      const canScheduleExact = await this.native.canScheduleExactAlarms();
+      if (!canScheduleExact) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  async openAlarmSettings(): Promise<void> {
+    await this.native.openExactAlarmSettings();
   }
 
   async scheduleAlarm(alarm: Alarm): Promise<string> {
-    const hasPermission = await this.requestPermissions();
-    if (!hasPermission) {
-      throw new Error('Notification permissions not granted');
+    if (!isNativeAlarmModuleAvailable()) {
+      throw new Error('Alarm scheduling is not supported on this platform');
     }
 
-    const [hours, minutes] = alarm.timeLocal.split(':').map(Number);
-    
-    let trigger: any;
-    
-    if (alarm.daysOfWeek.length === 0) {
-      const alarmDate = new Date();
-      alarmDate.setHours(hours, minutes, 0, 0);
-      
-      if (alarmDate <= new Date()) {
-        alarmDate.setDate(alarmDate.getDate() + 1);
-      }
-      
-      trigger = alarmDate;
-    } else {
-      trigger = {
-        hour: hours,
-        minute: minutes,
-        repeats: true,
-      };
+    const permissionsGranted = await this.ensurePermissions();
+    if (!permissionsGranted) {
+      throw new Error('Required alarm permissions not granted');
     }
 
-    const notificationId = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: alarm.label || 'Affirmation Alarm',
-        body: 'Time to speak your affirmations and goals!',
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.MAX,
-        vibrate: alarm.vibrate ? [0, 250, 250, 250] : undefined,
-        data: {
-          alarmId: alarm.id,
-          requireAffirmations: alarm.requireAffirmations,
-          requireGoals: alarm.requireGoals,
-          randomChallenge: alarm.randomChallenge,
-        },
-      },
-      trigger,
+    const fireDate = this.computeNextFireDate(alarm);
+
+    const alarmId = await this.native.scheduleAlarm({
+      id: alarm.id,
+      fireDateMs: fireDate.getTime(),
+      label: alarm.label,
+      requireAffirmations: alarm.requireAffirmations,
+      requireGoals: alarm.requireGoals,
+      randomChallenge: alarm.randomChallenge,
     });
 
-    console.log(`Alarm scheduled: ${notificationId}`);
-    return notificationId;
+    return alarmId;
   }
 
-  async cancelAlarm(notificationId: string): Promise<void> {
-    await Notifications.cancelScheduledNotificationAsync(notificationId);
-    console.log(`Alarm cancelled: ${notificationId}`);
+  async cancelAlarm(alarmId: string): Promise<void> {
+    if (!isNativeAlarmModuleAvailable()) {
+      return;
+    }
+    await this.native.cancelAlarm(alarmId);
   }
 
   async cancelAllAlarms(): Promise<void> {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    console.log('All alarms cancelled');
+    if (!isNativeAlarmModuleAvailable()) {
+      return;
+    }
+    await this.native.cancelAllAlarms();
   }
 
-  async getScheduledAlarms(): Promise<Notifications.NotificationRequest[]> {
-    return await Notifications.getAllScheduledNotificationsAsync();
+  async getScheduledAlarms(): Promise<NativeScheduledAlarm[]> {
+    if (!isNativeAlarmModuleAvailable()) {
+      return [];
+    }
+    return this.native.getScheduledAlarms();
   }
 
-  addNotificationListener(
-    callback: (notification: Notifications.Notification) => void
-  ): Notifications.Subscription {
-    return Notifications.addNotificationReceivedListener(callback);
-  }
+  private computeNextFireDate(alarm: Alarm): Date {
+    const now = new Date();
+    const [hour, minute] = alarm.timeLocal.split(':').map(Number);
+    const candidate = new Date(now);
+    candidate.setSeconds(0, 0);
+    candidate.setHours(hour, minute, 0, 0);
 
-  addNotificationResponseListener(
-    callback: (response: Notifications.NotificationResponse) => void
-  ): Notifications.Subscription {
-    return Notifications.addNotificationResponseReceivedListener(callback);
+    if (alarm.daysOfWeek.length === 0) {
+      if (candidate <= now) {
+        candidate.setDate(candidate.getDate() + 1);
+      }
+      return candidate;
+    }
+
+    const sortedDays = [...alarm.daysOfWeek].sort((a, b) => a - b);
+    const today = now.getDay();
+
+    let minDiff = Number.MAX_SAFE_INTEGER;
+    for (const day of sortedDays) {
+      let diff = (day - today + 7) % 7;
+      const occursToday = diff === 0;
+      if (occursToday && candidate <= now) {
+        diff = 7;
+      }
+      if (diff < minDiff) {
+        minDiff = diff;
+      }
+    }
+
+    candidate.setDate(candidate.getDate() + minDiff);
+    return candidate;
   }
 }
 

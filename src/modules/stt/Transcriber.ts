@@ -53,7 +53,7 @@ export class Transcriber {
   private async simulateTranscription(
     onResult: (result: TranscriptionResult) => void
   ): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise<void>(resolve => setTimeout(() => resolve(), 1000));
     
     onResult({
       transcript: 'I keep promises to myself',
@@ -61,7 +61,7 @@ export class Transcriber {
       isFinal: false,
     });
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise<void>(resolve => setTimeout(() => resolve(), 1000));
     
     onResult({
       transcript: 'I make progress even when it is hard',
@@ -69,7 +69,7 @@ export class Transcriber {
       isFinal: false,
     });
     
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
     
     onResult({
       transcript: 'I keep promises to myself I make progress even when it is hard',

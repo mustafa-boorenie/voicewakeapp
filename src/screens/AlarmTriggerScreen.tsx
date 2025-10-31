@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import * as Haptics from 'expo-haptics';
 import { WaveformDisplay } from '../components/WaveformDisplay';
 import { transcriber } from '../modules/stt/Transcriber';
 import { verifier } from '../modules/verify/Verifier';
@@ -135,7 +129,7 @@ export function AlarmTriggerScreen({ route, navigation }: any) {
       setCheatFlags(detectedCheatFlags);
       
       if (detectedCheatFlags.playback || detectedCheatFlags.micLoop) {
-        ReactNativeHapticFeedback.trigger('notificationError');
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert(
           'Audio Issue Detected',
           'It appears you may be playing back audio. Please speak naturally into the microphone.'
@@ -164,7 +158,7 @@ export function AlarmTriggerScreen({ route, navigation }: any) {
     });
 
     if (result.passed) {
-      ReactNativeHapticFeedback.trigger('notificationSuccess');
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
       if (currentPhase === 'affirmations' && requireGoals) {
         setCurrentPhase('goals');
@@ -179,7 +173,7 @@ export function AlarmTriggerScreen({ route, navigation }: any) {
         ]);
       }
     } else {
-      ReactNativeHapticFeedback.trigger('notificationError');
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       await saveVerificationResult(finalTranscript, result, detectedCheatFlags, false);
       Alert.alert('Try Again', result.details);
     }

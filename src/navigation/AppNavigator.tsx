@@ -7,12 +7,17 @@ import { AlarmTriggerScreen } from '../screens/AlarmTriggerScreen';
 import { CreateAlarmScreen } from '../screens/CreateAlarmScreen';
 import { EditAlarmScreen } from '../screens/EditAlarmScreen';
 import { GoalsAffirmationsScreen } from '../screens/GoalsAffirmationsScreen';
+import { navigationRef, RootStackParamList } from './navigationRef';
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<RootStackParamList>();
 
-export function AppNavigator() {
+type AppNavigatorProps = {
+  onReady?: () => void;
+};
+
+export function AppNavigator({ onReady }: AppNavigatorProps) {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef} onReady={onReady}>
       <Stack.Navigator
         initialRouteName="Home"
         screenOptions={{

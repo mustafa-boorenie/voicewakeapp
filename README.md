@@ -19,7 +19,7 @@ src/
 ├── constants/         # App copy, challenge words
 ├── db/               # SQLite schema and initialization
 ├── modules/          # Core business logic
-│   ├── alarm/        # Alarm scheduling (native bridge placeholder)
+│   ├── alarm/        # Cross-platform alarm scheduler (native bridge)
 │   ├── anticheat/    # Playback detection heuristics
 │   ├── audio/        # Audio recording and feature extraction
 │   ├── mi/           # Motivational Interviewing line generation
@@ -61,6 +61,27 @@ npm run android
 # Run on web (experimental)
 npm run web
 ```
+
+### Native builds (required for alarm + haptics)
+
+The project now uses first-party native alarm modules. After installing dependencies:
+
+```bash
+# Generate ios/android folders (already committed but safe to regenerate)
+npx expo prebuild
+
+# Install iOS pods
+cd ios && npx pod-install
+
+# Build & run from native tooling
+cd ..
+npx expo run:ios    # or open ios/AffirmationAlarm.xcworkspace in Xcode
+npx expo run:android
+```
+
+> **Note:** Android exact alarms require `SCHEDULE_EXACT_ALARM` approval on Android 12+. The app will prompt users to grant it when scheduling.
+
+On iOS 18+, AlarmKit is optional. The current release uses local notifications as a fallback until AlarmKit is widely available.
 
 ### Running on Physical Devices
 
@@ -131,14 +152,6 @@ The following modules have **working JavaScript interfaces** but need **native i
 
 See: [Native Modules Documentation](#native-modules-implementation)
 
-#### 2. Alarm Scheduling (`src/modules/alarm/AlarmScheduler.ts`)
-**Current**: Uses Expo Notifications (local notifications only)  
-**Needed**:
-- iOS: `UNUserNotificationCenter` with critical alerts + background tasks
-- Android: `AlarmManager.setExactAndAllowWhileIdle()` + foreground service
-
-See: [Native Modules Documentation](#native-modules-implementation)
-
 #### 3. Audio Recording (`src/modules/audio/Recorder.ts`)
 **Current**: Simulated audio buffer generation  
 **Needed**:
@@ -146,6 +159,20 @@ See: [Native Modules Documentation](#native-modules-implementation)
 - Android: `AudioRecord` API
 
 ## 🔧 Native Modules Implementation
+
+### Alarm Scheduler (Android + iOS)
+
+- **Android**: `android/app/src/main/java/com/affirmationalarm/app/alarms/`
+  - `AlarmSchedulerModule.kt` exposes scheduling APIs to React Native.
+  - `AlarmReceiver.kt` launches the app and posts a high-priority fullscreen notification when alarms fire.
+  - Uses `AlarmManager.setAlarmClock` for exact wakeups on SDK 31+ and falls back to `setExactAndAllowWhileIdle` on older versions.
+  - Persists scheduled alarms in `SharedPreferences` so JS can inspect/cancel them.
+- **iOS**: `ios/AffirmationAlarm/Alarms/`
+  - `AlarmSchedulerModule.swift` bridges to `UNUserNotificationCenter` with local notifications and surfaces alarm-fired events to JS.
+  - `AlarmNotificationDelegate.swift` handles delivery callbacks even when the app is relaunched.
+  - `AlarmSchedulerStore.swift` mirrors the Android store for parity.
+
+> AlarmKit APIs (iOS 18+) are scaffolded via conditional imports. The current implementation defaults to local notifications so the app continues to work on iOS 15–17 while we validate AlarmKit adoption.
 
 ### iOS Native Module: Speech Recognition
 

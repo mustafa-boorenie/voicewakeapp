@@ -6,8 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Slider,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MIOnboardingData } from '../types';
 import { lineGenerator } from '../modules/mi/LineGenerator';
@@ -79,7 +79,7 @@ export function MIOnboardingScreen({ navigation }: any) {
                 maximumValue={10}
                 step={1}
                 value={data.importanceScore}
-                onValueChange={value => setData({ ...data, importanceScore: value })}
+                onValueChange={(value: number) => setData({ ...data, importanceScore: value })}
                 minimumTrackTintColor="#4CAF50"
                 maximumTrackTintColor="#ddd"
                 accessibilityLabel="Importance scale from 0 to 10"
@@ -122,7 +122,7 @@ export function MIOnboardingScreen({ navigation }: any) {
                 maximumValue={10}
                 step={1}
                 value={data.confidenceScore}
-                onValueChange={value => setData({ ...data, confidenceScore: value })}
+                onValueChange={(value: number) => setData({ ...data, confidenceScore: value })}
                 minimumTrackTintColor="#4CAF50"
                 maximumTrackTintColor="#ddd"
                 accessibilityLabel="Confidence scale from 0 to 10"
