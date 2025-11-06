@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { initDatabase } from '../db/schema';
 import { Alarm } from '../types';
+import { alarmScheduler } from '../modules/alarm/AlarmScheduler';
 
 const DAYS_OF_WEEK = [
   { id: 0, label: 'Sun' },
@@ -111,6 +112,55 @@ export function EditAlarmScreen({ route, navigation }: any) {
       return;
     }
 
+    // Check permissions if alarm is enabled
+    if (enabled) {
+      console.log('🔑 Checking permissions before updating alarm...');
+      
+      const permissionStatus = await alarmScheduler.getPermissionStatus();
+      console.log('📋 Permission status:', permissionStatus);
+      
+      if (permissionStatus === 'notDetermined') {
+        // First time - request permissions (this will show iOS dialog)
+        console.log('🔔 First time - requesting permissions...');
+        const granted = await alarmScheduler.requestPermissions();
+        
+        if (!granted) {
+          console.log('❌ User denied permissions');
+          Alert.alert(
+            'Permissions Required',
+            'Notification permissions are required to schedule alarms. You can enable them later in Settings.',
+            [{ text: 'OK', style: 'cancel' }]
+          );
+          return;
+        }
+        console.log('✅ User granted permissions');
+      } else if (permissionStatus === 'denied') {
+        // Previously denied - must go to Settings
+        console.log('❌ Permissions previously denied - showing Settings prompt');
+        Alert.alert(
+          'Permissions Required',
+          'This app needs notification permissions to schedule alarms. Please enable notifications in Settings.',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            },
+            {
+              text: 'Open Settings',
+              onPress: () => alarmScheduler.openAlarmSettings()
+            }
+          ]
+        );
+        return;
+      } else if (permissionStatus === 'authorized' || permissionStatus === 'provisional') {
+        console.log('✅ Permissions already granted');
+      } else {
+        console.log('⚠️ Unknown permission status:', permissionStatus);
+        Alert.alert('Error', 'Could not determine notification permission status.');
+        return;
+      }
+    }
+
     try {
       const db = await initDatabase();
       const timeLocal = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
@@ -138,9 +188,70 @@ export function EditAlarmScreen({ route, navigation }: any) {
         ]
       );
 
-      Alert.alert('Success', 'Alarm updated successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      console.log('✅ Alarm updated in database');
+
+      // Cancel old alarm and schedule new one if enabled
+      try {
+        await alarmScheduler.cancelAlarm(alarmId);
+        console.log('✅ Cancelled old alarm schedule');
+
+        if (enabled) {
+          const alarm: Alarm = {
+            id: alarmId,
+            label,
+            timeLocal,
+            daysOfWeek: selectedDays,
+            volume,
+            toneUri: 'default',
+            vibrate,
+            maxSnoozes,
+            snoozeLengthMin,
+            requireAffirmations,
+            requireGoals,
+            randomChallenge,
+            enabled: true,
+            createdAt: new Date().toISOString(),
+          };
+
+          await alarmScheduler.scheduleAlarm(alarm);
+          console.log('✅ Rescheduled alarm with updated settings');
+        }
+
+        Alert.alert(
+          'Success',
+          'Alarm updated successfully!',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+      } catch (scheduleError: any) {
+        console.error('Error rescheduling alarm:', scheduleError);
+        
+        if (scheduleError.message && scheduleError.message.includes('PERMISSIONS_REQUIRED')) {
+          Alert.alert(
+            'Alarm Updated but Not Scheduled',
+            'The alarm was updated but could not be scheduled because notification permissions are required.',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+                onPress: () => navigation.goBack()
+              },
+              {
+                text: 'Open Settings',
+                onPress: async () => {
+                  await alarmScheduler.openAlarmSettings();
+                  navigation.goBack();
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Partial Success',
+            'Alarm was updated in database but failed to reschedule. Error: ' + scheduleError.message,
+            [{ text: 'OK', onPress: () => navigation.goBack() }]
+          );
+        }
+      }
     } catch (error) {
       console.error('Error updating alarm:', error);
       Alert.alert('Error', 'Failed to update alarm');
@@ -159,7 +270,20 @@ export function EditAlarmScreen({ route, navigation }: any) {
           onPress: async () => {
             try {
               const db = await initDatabase();
+              
+              // Cancel the alarm from native scheduler first
+              try {
+                await alarmScheduler.cancelAlarm(alarmId);
+                console.log('✅ Cancelled alarm from native scheduler');
+              } catch (cancelError) {
+                console.error('Error cancelling alarm schedule:', cancelError);
+                // Continue with database deletion even if cancel fails
+              }
+              
+              // Delete from database
               await db.runAsync('DELETE FROM alarms WHERE id = ?', [alarmId]);
+              console.log('✅ Deleted alarm from database');
+              
               Alert.alert('Deleted', 'Alarm deleted successfully', [
                 { text: 'OK', onPress: () => navigation.goBack() },
               ]);

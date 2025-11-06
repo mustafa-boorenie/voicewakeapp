@@ -20,7 +20,10 @@
       "infoPlist": {
         "NSSpeechRecognitionUsageDescription": "This app needs speech recognition to verify your morning affirmations and goals.",
         "NSMicrophoneUsageDescription": "This app needs microphone access to verify you've spoken your affirmations and goals aloud.",
-        "UIBackgroundModes": ["audio", "processing"],
+        "UIBackgroundModes": [
+          "audio",
+          "processing"
+        ],
         "NSUserNotificationsUsageDescription": "This app uses notifications to wake you up with your personalized alarms."
       }
     },
@@ -42,6 +45,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
   }
 }

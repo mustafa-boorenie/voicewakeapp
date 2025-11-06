@@ -78,6 +78,27 @@ export class AntiCheatHeuristics {
     return crossings / (audioBuffer.length - 1);
   }
 
+  computeMagnitudeSpectrum(audioBuffer: Float32Array): Float32Array {
+    const n = audioBuffer.length;
+    const halfN = Math.floor(n / 2);
+    const magnitudes = new Float32Array(halfN);
+
+    for (let k = 0; k < halfN; k++) {
+      let real = 0;
+      let imag = 0;
+
+      for (let t = 0; t < n; t++) {
+        const angle = (-2 * Math.PI * k * t) / n;
+        real += audioBuffer[t] * Math.cos(angle);
+        imag += audioBuffer[t] * Math.sin(angle);
+      }
+
+      magnitudes[k] = Math.sqrt(real * real + imag * imag);
+    }
+
+    return magnitudes;
+  }
+
   detectHumanProsody(audioBuffer: Float32Array, sampleRate: number): boolean {
     const frameSize = Math.floor(sampleRate * 0.02);
     const numFrames = Math.floor(audioBuffer.length / frameSize);

@@ -9,6 +9,7 @@ export type RootStackParamList = {
     requireGoals: boolean;
     randomChallenge: boolean;
     label?: string;
+    antiCheatToken: string;
   };
   CreateAlarm: undefined;
   EditAlarm: { alarmId: string } | undefined;

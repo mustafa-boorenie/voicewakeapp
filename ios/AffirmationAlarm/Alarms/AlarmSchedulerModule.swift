@@ -7,6 +7,7 @@ import UserNotifications
 class AlarmSchedulerModule: RCTEventEmitter {
   private let store = AlarmSchedulerStore()
   private lazy var notificationScheduler = LocalNotificationScheduler(store: store)
+  private let alarmKitBridge = AlarmKitBridge.shared
   private var observersBound = false
   private var hasListeners = false
 
@@ -50,15 +51,33 @@ class AlarmSchedulerModule: RCTEventEmitter {
     let requireGoals = details["requireGoals"] as? Bool ?? false
     let randomChallenge = details["randomChallenge"] as? Bool ?? false
 
+    let antiCheatToken = UUID().uuidString
+
     let payload = TriggeredAlarmPayload(
       alarmId: alarmId,
       label: label,
       requireAffirmations: requireAffirmations,
       requireGoals: requireGoals,
-      randomChallenge: randomChallenge
+      randomChallenge: randomChallenge,
+      antiCheatToken: antiCheatToken
     )
 
-    scheduleFallback(alarmId: alarmId, date: fireDate, label: label, payload: payload, resolve: resolve, reject: reject)
+    alarmKitBridge.requestAuthorization { granted in
+      guard granted else {
+        reject(AlarmError.authorizationDenied.code, "AlarmKit authorization was not granted", nil)
+        return
+      }
+
+      self.scheduleFallback(
+        alarmId: alarmId,
+        date: fireDate,
+        label: label,
+        payload: payload,
+        antiCheatToken: antiCheatToken,
+        resolve: resolve,
+        reject: reject
+      )
+    }
   }
 
   @objc(cancelAlarm:resolver:rejecter:)
@@ -88,6 +107,65 @@ class AlarmSchedulerModule: RCTEventEmitter {
     resolve(true)
   }
 
+  @objc(getNotificationPermissionStatus:rejecter:)
+  func getNotificationPermissionStatus(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    UNUserNotificationCenter.current().getNotificationSettings { settings in
+      let status: String
+      switch settings.authorizationStatus {
+      case .notDetermined:
+        status = "notDetermined"
+      case .denied:
+        status = "denied"
+      case .authorized:
+        status = "authorized"
+      case .provisional:
+        status = "provisional"
+      case .ephemeral:
+        status = "ephemeral"
+      @unknown default:
+        status = "unknown"
+      }
+      print("📱 getNotificationPermissionStatus returning: \(status)")
+      resolve(status)
+    }
+  }
+  
+  @objc(directRequestNotificationPermission:rejecter:)
+  func directRequestNotificationPermission(
+    _ resolve: @escaping RCTPromiseResolveBlock,
+    rejecter reject: @escaping RCTPromiseRejectBlock
+  ) {
+    print("🧪 DIRECT PERMISSION REQUEST TEST")
+    print("🧪 Thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
+    
+    // Force onto main thread
+    DispatchQueue.main.async {
+      print("🧪 Now on main thread: \(Thread.isMainThread)")
+      
+      let center = UNUserNotificationCenter.current()
+      print("🧪 Got notification center: \(center)")
+      
+      print("🧪 Calling requestAuthorization...")
+      center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+        print("🧪 requestAuthorization callback executed!")
+        print("🧪 Granted: \(granted)")
+        
+        if let error = error {
+          print("🧪 Error: \(error.localizedDescription)")
+          reject("PERMISSION_ERROR", error.localizedDescription, error)
+        } else {
+          print("🧪 No error, resolving with: \(granted)")
+          resolve(granted)
+        }
+      }
+      
+      print("🧪 requestAuthorization called (waiting for callback...)")
+    }
+  }
+
   @objc(openExactAlarmSettings:rejecter:)
   func openExactAlarmSettings(
     _ resolve: @escaping RCTPromiseResolveBlock,
@@ -108,18 +186,62 @@ class AlarmSchedulerModule: RCTEventEmitter {
     _ resolve: @escaping RCTPromiseResolveBlock,
     rejecter reject: @escaping RCTPromiseRejectBlock
   ) {
-    UNUserNotificationCenter.current().getNotificationSettings { settings in
-      switch settings.authorizationStatus {
-      case .authorized, .provisional, .ephemeral:
-        resolve(true)
-      case .denied:
-        resolve(false)
-      case .notDetermined:
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-          resolve(granted)
+    // MUST be on main thread per Apple guidelines
+    DispatchQueue.main.async {
+      let center = UNUserNotificationCenter.current()
+      
+      print("🔔 Checking notification permission status...")
+      
+      // Check current authorization status
+      center.getNotificationSettings { settings in
+        print("📋 Current notification authorization status: \(settings.authorizationStatus.rawValue)")
+        
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+          print("✅ Notification permissions already granted")
+          resolve(true)
+          
+        case .denied:
+          print("❌ Notification permissions previously denied - user must enable in Settings")
+          resolve(false)
+          
+        case .notDetermined:
+          print("🔔 Requesting notification permissions (first time)...")
+          print("⚠️ iOS system dialog should appear now...")
+          
+          // Request authorization - MUST be on main thread
+          DispatchQueue.main.async {
+            center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+              if let error = error {
+                print("❌ Error requesting notification permissions: \(error.localizedDescription)")
+                resolve(false)
+                return
+              }
+              
+              if granted {
+                print("✅ User GRANTED notification permissions")
+                
+                // Also request AlarmKit authorization if available (iOS 17+)
+                self.alarmKitBridge.requestAuthorization { alarmKitGranted in
+                  if alarmKitGranted {
+                    print("✅ AlarmKit authorization also granted")
+                  } else {
+                    print("⚠️ AlarmKit not available or denied (will use notifications)")
+                  }
+                }
+                
+                resolve(true)
+              } else {
+                print("❌ User DENIED notification permissions")
+                resolve(false)
+              }
+            }
+          }
+          
+        @unknown default:
+          print("❓ Unknown authorization status")
+          resolve(false)
         }
-      @unknown default:
-        resolve(false)
       }
     }
   }
@@ -180,6 +302,7 @@ class AlarmSchedulerModule: RCTEventEmitter {
     date: Date,
     label: String?,
     payload: TriggeredAlarmPayload,
+    antiCheatToken: String,
     resolve: @escaping RCTPromiseResolveBlock,
     reject: @escaping RCTPromiseRejectBlock
   ) {
@@ -189,7 +312,8 @@ class AlarmSchedulerModule: RCTEventEmitter {
       label: label,
       requireAffirmations: payload.requireAffirmations,
       requireGoals: payload.requireGoals,
-      randomChallenge: payload.randomChallenge
+      randomChallenge: payload.randomChallenge,
+      antiCheatToken: antiCheatToken
     ) { result in
       switch result {
       case .success(let id):

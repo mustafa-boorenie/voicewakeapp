@@ -50,6 +50,8 @@
     <string>This app needs speech recognition to verify your morning affirmations and goals.</string>
     <key>NSUserNotificationsUsageDescription</key>
     <string>This app uses notifications to wake you up with your personalized alarms.</string>
+    <key>NSAlarmKitUsageDescription</key>
+    <string>This app schedules reliable alarms using AlarmKit so you never miss your affirmations.</string>
     <key>RCTNewArchEnabled</key>
     <true/>
     <key>UIBackgroundModes</key>

@@ -63,6 +63,7 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
       transcript_json TEXT NOT NULL,
       similarity_scores TEXT NOT NULL,
       cheat_flags TEXT NOT NULL,
+      anti_cheat_token TEXT,
       FOREIGN KEY (alarm_id) REFERENCES alarms(id) ON DELETE CASCADE
     );
 
@@ -91,6 +92,8 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
     CREATE INDEX IF NOT EXISTS idx_affirmations_user_id ON affirmations(user_id);
   `);
 
+  await ensureColumn(db, 'alarm_runs', 'anti_cheat_token', 'TEXT');
+
   return db;
 }
 
@@ -108,4 +111,18 @@ export async function getOrCreateDefaultSettings(db: SQLite.SQLiteDatabase): Pro
   }
   
   return result;
+}
+
+async function ensureColumn(
+  db: SQLite.SQLiteDatabase,
+  tableName: string,
+  column: string,
+  definition: string
+): Promise<void> {
+  const columns = await db.getAllAsync(`PRAGMA table_info(${tableName})`);
+  const exists = Array.isArray(columns) && columns.some((col: any) => col?.name === column);
+
+  if (!exists) {
+    await db.execAsync(`ALTER TABLE ${tableName} ADD COLUMN ${column} ${definition}`);
+  }
 }

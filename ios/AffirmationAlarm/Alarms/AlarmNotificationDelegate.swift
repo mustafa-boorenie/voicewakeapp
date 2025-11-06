@@ -47,12 +47,14 @@ private extension TriggeredAlarmPayload {
     let requireAffirmations = userInfo["requireAffirmations"] as? Bool ?? false
     let requireGoals = userInfo["requireGoals"] as? Bool ?? false
     let randomChallenge = userInfo["randomChallenge"] as? Bool ?? false
+    let antiCheatToken = userInfo["antiCheatToken"] as? String ?? UUID().uuidString
     self.init(
       alarmId: alarmId,
       label: label,
       requireAffirmations: requireAffirmations,
       requireGoals: requireGoals,
-      randomChallenge: randomChallenge
+      randomChallenge: randomChallenge,
+      antiCheatToken: antiCheatToken
     )
   }
 }

@@ -5,7 +5,6 @@ import * as Haptics from 'expo-haptics';
 import { WaveformDisplay } from '../components/WaveformDisplay';
 import { transcriber } from '../modules/stt/Transcriber';
 import { verifier } from '../modules/verify/Verifier';
-import { audioRecorder } from '../modules/audio/Recorder';
 import { antiCheatHeuristics } from '../modules/anticheat/Heuristics';
 import { getDailyChallengeWord } from '../utils/challengeWords';
 import { COPY } from '../constants/copy';
@@ -15,7 +14,7 @@ import { CheatFlags } from '../types';
 const USER_ID = 'user_default';
 
 export function AlarmTriggerScreen({ route, navigation }: any) {
-  const { alarmId, requireAffirmations, requireGoals, randomChallenge } = route.params;
+  const { alarmId, requireAffirmations, requireGoals, randomChallenge, antiCheatToken } = route.params;
   
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -34,6 +33,12 @@ export function AlarmTriggerScreen({ route, navigation }: any) {
 
   useEffect(() => {
     loadData();
+
+    return () => {
+      transcriber.cancel().catch(error => {
+        console.warn('Failed to cancel transcription', error);
+      });
+    };
   }, []);
 
   const loadData = async () => {
@@ -73,9 +78,9 @@ export function AlarmTriggerScreen({ route, navigation }: any) {
       await db.runAsync(
         `INSERT INTO alarm_runs (
           id, alarm_id, fired_at, snoozes_used, success,
-          transcript_json, similarity_scores, cheat_flags
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [runId, alarmId, now, 0, 0, '{}', '{}', '{}']
+          transcript_json, similarity_scores, cheat_flags, anti_cheat_token
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [runId, alarmId, now, 0, 0, '{}', '{}', '{}', antiCheatToken]
       );
       
       setLoading(false);
@@ -92,8 +97,6 @@ export function AlarmTriggerScreen({ route, navigation }: any) {
     setRecordedAudio(null);
 
     try {
-      await audioRecorder.start();
-      
       await transcriber.transcribeStream(
         (result) => {
           setTranscript(result.transcript);
@@ -114,17 +117,26 @@ export function AlarmTriggerScreen({ route, navigation }: any) {
     setIsRecording(false);
     
     try {
-      const audio = await audioRecorder.stop();
-      await transcriber.stop();
-      
-      setRecordedAudio(audio);
+      const recordingResult = await transcriber.stop();
+      const audio = recordingResult?.audio;
+
+      setRecordedAudio(audio ?? null);
       
       if (!audio || audio.length === 0) {
         Alert.alert('Error', 'No audio was recorded. Please try again.');
         return;
       }
       
-      const audioFeatures = audioRecorder.getAudioFeatures(audio);
+      const magnitudeSpectrum = antiCheatHeuristics.computeMagnitudeSpectrum(audio);
+      const audioFeatures = {
+        rmsEnergy: antiCheatHeuristics.computeRMSEnergy(audio),
+        spectralFlatness: antiCheatHeuristics.computeSpectralFlatness(magnitudeSpectrum),
+        zeroCrossingRate: antiCheatHeuristics.computeZeroCrossingRate(audio),
+        hasHumanProsody: antiCheatHeuristics.detectHumanProsody(
+          audio,
+          recordingResult?.sampleRate ?? 44100
+        ),
+      };
       const detectedCheatFlags = antiCheatHeuristics.analyzeAudioFeatures(audioFeatures);
       setCheatFlags(detectedCheatFlags);
       

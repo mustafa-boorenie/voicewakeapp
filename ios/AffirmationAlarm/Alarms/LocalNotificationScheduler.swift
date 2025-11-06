@@ -16,6 +16,7 @@ final class LocalNotificationScheduler {
     requireAffirmations: Bool,
     requireGoals: Bool,
     randomChallenge: Bool,
+    antiCheatToken: String,
     completion: @escaping (Result<String, Error>) -> Void
   ) {
     let content = UNMutableNotificationContent()
@@ -27,7 +28,8 @@ final class LocalNotificationScheduler {
       "label": label as Any,
       "requireAffirmations": requireAffirmations,
       "requireGoals": requireGoals,
-      "randomChallenge": randomChallenge
+      "randomChallenge": randomChallenge,
+      "antiCheatToken": antiCheatToken
     ]
 
     let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: fireDate)
@@ -44,7 +46,8 @@ final class LocalNotificationScheduler {
           label: label,
           requireAffirmations: requireAffirmations,
           requireGoals: requireGoals,
-          randomChallenge: randomChallenge
+          randomChallenge: randomChallenge,
+          antiCheatToken: antiCheatToken
         )
         self.store.save(record: record)
         completion(.success(id))

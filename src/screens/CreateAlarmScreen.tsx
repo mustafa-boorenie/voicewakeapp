@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { initDatabase } from '../db/schema';
+import { alarmScheduler } from '../modules/alarm/AlarmScheduler';
+import { Alarm } from '../types';
 
 const DAYS_OF_WEEK = [
   { id: 0, label: 'Sun' },
@@ -67,12 +69,62 @@ export function CreateAlarmScreen({ navigation }: any) {
       return;
     }
 
+    // Check permissions FIRST before saving anything
+    console.log('🔑 Checking permissions before creating alarm...');
+    
+    // First check the current status to decide what to do
+    const permissionStatus = await alarmScheduler.getPermissionStatus();
+    console.log('📋 Permission status:', permissionStatus);
+    
+    if (permissionStatus === 'notDetermined') {
+      // First time - request permissions (this will show iOS dialog)
+      console.log('🔔 First time - requesting permissions...');
+      const granted = await alarmScheduler.requestPermissions();
+      
+      if (!granted) {
+        console.log('❌ User denied permissions');
+        Alert.alert(
+          'Permissions Required',
+          'Notification permissions are required to schedule alarms. You can enable them later in Settings.',
+          [{ text: 'OK', style: 'cancel' }]
+        );
+        return;
+      }
+      console.log('✅ User granted permissions');
+    } else if (permissionStatus === 'denied') {
+      // Previously denied - must go to Settings
+      console.log('❌ Permissions previously denied - showing Settings prompt');
+      Alert.alert(
+        'Permissions Required',
+        'This app needs notification permissions to schedule alarms. Please enable notifications in Settings.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Open Settings',
+            onPress: () => alarmScheduler.openAlarmSettings()
+          }
+        ]
+      );
+      return;
+    } else if (permissionStatus === 'authorized' || permissionStatus === 'provisional') {
+      console.log('✅ Permissions already granted');
+      // Continue with alarm creation
+    } else {
+      console.log('⚠️ Unknown permission status:', permissionStatus);
+      Alert.alert('Error', 'Could not determine notification permission status.');
+      return;
+    }
+
     try {
       const db = await initDatabase();
       const id = `alarm_${Date.now()}`;
       const timeLocal = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
       const createdAt = new Date().toISOString();
 
+      // Save to database
       await db.runAsync(
         `INSERT INTO alarms (
           id, label, time_local, days_of_week, volume, tone_uri, vibrate,
@@ -97,9 +149,66 @@ export function CreateAlarmScreen({ navigation }: any) {
         ]
       );
 
-      Alert.alert('Success', 'Alarm created successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      console.log('✅ Alarm saved to database, now scheduling with native module...');
+
+      // Schedule the alarm with the native module
+      const alarm: Alarm = {
+        id,
+        label,
+        timeLocal,
+        daysOfWeek: selectedDays,
+        volume,
+        toneUri: 'default',
+        vibrate,
+        maxSnoozes,
+        snoozeLengthMin,
+        requireAffirmations,
+        requireGoals,
+        randomChallenge,
+        enabled: true,
+        createdAt,
+      };
+
+      try {
+        await alarmScheduler.scheduleAlarm(alarm);
+        console.log('✅ Alarm scheduled with native module successfully');
+        
+        Alert.alert(
+          'Success',
+          'Alarm created and scheduled successfully!',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+      } catch (scheduleError: any) {
+        console.error('Error scheduling alarm with native module:', scheduleError);
+        
+        // Check if it's a permissions error
+        if (scheduleError.message && scheduleError.message.includes('PERMISSIONS_REQUIRED')) {
+          Alert.alert(
+            'Alarm Saved but Not Scheduled',
+            'The alarm was saved but could not be scheduled because notification permissions are required. Please enable notifications in Settings.',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+                onPress: () => navigation.goBack()
+              },
+              {
+                text: 'Open Settings',
+                onPress: async () => {
+                  await alarmScheduler.openAlarmSettings();
+                  navigation.goBack();
+                }
+              }
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Partial Success',
+            'Alarm was saved to the database but failed to schedule with the system. Error: ' + scheduleError.message,
+            [{ text: 'OK', onPress: () => navigation.goBack() }]
+          );
+        }
+      }
     } catch (error) {
       console.error('Error creating alarm:', error);
       Alert.alert('Error', 'Failed to create alarm');

@@ -6,6 +6,7 @@ type AlarmSchedulerEvent = {
   requireAffirmations: boolean;
   requireGoals: boolean;
   randomChallenge: boolean;
+  antiCheatToken: string;
 };
 
 type NativeScheduledAlarm = {
@@ -14,11 +15,20 @@ type NativeScheduledAlarm = {
   label?: string | null;
 };
 
+type NotificationPermissionStatus = 
+  | 'notDetermined' 
+  | 'denied' 
+  | 'authorized' 
+  | 'provisional' 
+  | 'ephemeral' 
+  | 'unknown';
+
 type NativeAlarmSchedulerModule = {
   scheduleAlarm(details: Record<string, unknown>): Promise<string>;
   cancelAlarm(alarmId: string): Promise<void>;
   cancelAllAlarms(): Promise<void>;
   getScheduledAlarms(): Promise<NativeScheduledAlarm[]>;
+  getNotificationPermissionStatus(): Promise<NotificationPermissionStatus>;
   ensureNotificationPermission(): Promise<boolean>;
   openExactAlarmSettings(): Promise<void>;
   canScheduleExactAlarms(): Promise<boolean>;
@@ -52,5 +62,10 @@ export function addAlarmFiredListener(listener: (event: AlarmSchedulerEvent) => 
   };
 }
 
-export type { AlarmSchedulerEvent, NativeScheduledAlarm, NativeAlarmSchedulerModule };
+export type { 
+  AlarmSchedulerEvent, 
+  NativeScheduledAlarm, 
+  NativeAlarmSchedulerModule,
+  NotificationPermissionStatus 
+};
 

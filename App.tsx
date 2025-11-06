@@ -11,17 +11,23 @@ export default function App() {
   const [pendingAlarm, setPendingAlarm] = useState<AlarmRouteParams | null>(null);
 
   const handleAlarmEvent = useCallback<AlarmFiredListener>((event) => {
+    console.log('🔥🔥🔥 ALARM FIRED! 🔥🔥🔥');
+    console.log('Event details:', JSON.stringify(event, null, 2));
+    
     const params: AlarmRouteParams = {
       alarmId: event.alarmId,
       requireAffirmations: event.requireAffirmations,
       requireGoals: event.requireGoals,
       randomChallenge: event.randomChallenge,
       label: event.label,
+      antiCheatToken: event.antiCheatToken,
     };
 
     if (navigationRef.isReady()) {
+      console.log('📱 Navigation ready - navigating to AlarmTrigger');
       navigate('AlarmTrigger', params);
     } else {
+      console.log('⏳ Navigation not ready - saving as pending alarm');
       setPendingAlarm(params);
     }
   }, []);
@@ -34,15 +40,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    console.log('🔔 Setting up alarm event listener');
     const subscription = alarmScheduler.addAlarmFiredListener(handleAlarmEvent);
+    console.log('✅ Alarm listener registered');
 
     alarmScheduler.consumePendingAlarm().then((event) => {
       if (event) {
+        console.log('📬 Found pending alarm from previous session');
         handleAlarmEvent(event);
+      } else {
+        console.log('📭 No pending alarms');
       }
     });
 
     return () => {
+      console.log('🔕 Removing alarm event listener');
       subscription.remove();
     };
   }, [handleAlarmEvent]);

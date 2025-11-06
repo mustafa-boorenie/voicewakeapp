@@ -7,6 +7,7 @@ struct ScheduledAlarmRecord: Codable {
   let requireAffirmations: Bool
   let requireGoals: Bool
   let randomChallenge: Bool
+  let antiCheatToken: String
 
   var payload: TriggeredAlarmPayload {
     TriggeredAlarmPayload(
@@ -14,8 +15,59 @@ struct ScheduledAlarmRecord: Codable {
       label: label,
       requireAffirmations: requireAffirmations,
       requireGoals: requireGoals,
-      randomChallenge: randomChallenge
+      randomChallenge: randomChallenge,
+      antiCheatToken: antiCheatToken
     )
+  }
+
+  init(
+    id: String,
+    fireDate: Date,
+    label: String?,
+    requireAffirmations: Bool,
+    requireGoals: Bool,
+    randomChallenge: Bool,
+    antiCheatToken: String
+  ) {
+    self.id = id
+    self.fireDate = fireDate
+    self.label = label
+    self.requireAffirmations = requireAffirmations
+    self.requireGoals = requireGoals
+    self.randomChallenge = randomChallenge
+    self.antiCheatToken = antiCheatToken
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case id
+    case fireDate
+    case label
+    case requireAffirmations
+    case requireGoals
+    case randomChallenge
+    case antiCheatToken
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    id = try container.decode(String.self, forKey: .id)
+    fireDate = try container.decode(Date.self, forKey: .fireDate)
+    label = try container.decodeIfPresent(String.self, forKey: .label)
+    requireAffirmations = try container.decode(Bool.self, forKey: .requireAffirmations)
+    requireGoals = try container.decode(Bool.self, forKey: .requireGoals)
+    randomChallenge = try container.decode(Bool.self, forKey: .randomChallenge)
+    antiCheatToken = try container.decodeIfPresent(String.self, forKey: .antiCheatToken) ?? UUID().uuidString
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(id, forKey: .id)
+    try container.encode(fireDate, forKey: .fireDate)
+    try container.encodeIfPresent(label, forKey: .label)
+    try container.encode(requireAffirmations, forKey: .requireAffirmations)
+    try container.encode(requireGoals, forKey: .requireGoals)
+    try container.encode(randomChallenge, forKey: .randomChallenge)
+    try container.encode(antiCheatToken, forKey: .antiCheatToken)
   }
 }
 
@@ -25,6 +77,7 @@ struct TriggeredAlarmPayload: Codable {
   let requireAffirmations: Bool
   let requireGoals: Bool
   let randomChallenge: Bool
+  let antiCheatToken: String
 
   var dictionaryRepresentation: [String: Any] {
     [
@@ -32,8 +85,44 @@ struct TriggeredAlarmPayload: Codable {
       "label": label as Any,
       "requireAffirmations": requireAffirmations,
       "requireGoals": requireGoals,
-      "randomChallenge": randomChallenge
+      "randomChallenge": randomChallenge,
+      "antiCheatToken": antiCheatToken
     ]
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case alarmId
+    case label
+    case requireAffirmations
+    case requireGoals
+    case randomChallenge
+    case antiCheatToken
+  }
+
+  init(
+    alarmId: String,
+    label: String?,
+    requireAffirmations: Bool,
+    requireGoals: Bool,
+    randomChallenge: Bool,
+    antiCheatToken: String
+  ) {
+    self.alarmId = alarmId
+    self.label = label
+    self.requireAffirmations = requireAffirmations
+    self.requireGoals = requireGoals
+    self.randomChallenge = randomChallenge
+    self.antiCheatToken = antiCheatToken
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    alarmId = try container.decode(String.self, forKey: .alarmId)
+    label = try container.decodeIfPresent(String.self, forKey: .label)
+    requireAffirmations = try container.decode(Bool.self, forKey: .requireAffirmations)
+    requireGoals = try container.decode(Bool.self, forKey: .requireGoals)
+    randomChallenge = try container.decode(Bool.self, forKey: .randomChallenge)
+    antiCheatToken = try container.decodeIfPresent(String.self, forKey: .antiCheatToken) ?? UUID().uuidString
   }
 }
 
