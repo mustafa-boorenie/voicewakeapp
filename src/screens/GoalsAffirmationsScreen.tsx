@@ -7,10 +7,13 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { initDatabase } from '../db/schema';
 import { Goal, Affirmation } from '../types';
+import { GradientCard } from '../components/GradientCard';
 
 export function GoalsAffirmationsScreen({ navigation }: any) {
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -226,46 +229,56 @@ export function GoalsAffirmationsScreen({ navigation }: any) {
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <Text style={styles.loadingText}>Loading...</Text>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.title} accessibilityRole="header">
-          Goals & Affirmations
-        </Text>
-      </View>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Goals & Affirmations</Text>
+          <Text style={styles.subtitle}>Shape your future, one thought at a time</Text>
+        </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Goals Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Goals</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="flag" size={24} color="#6B4CE6" />
+              <Text style={styles.sectionTitle}>My Goals</Text>
+            </View>
             <TouchableOpacity
               onPress={handleAddGoal}
               style={styles.addButton}
               accessibilityRole="button"
               accessibilityLabel="Add new goal"
             >
-              <Text style={styles.addButtonText}>+ Add</Text>
+              <Ionicons name="add" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
 
           {goals.length === 0 ? (
-            <Text style={styles.emptyText}>No goals yet. Add one to get started!</Text>
+            <View style={styles.emptyCard}>
+              <Ionicons name="flag-outline" size={48} color="#E0E0E0" />
+              <Text style={styles.emptyTitle}>No goals yet</Text>
+              <Text style={styles.emptyText}>Tap the + button to add your first goal</Text>
+            </View>
           ) : (
             goals.map(goal => (
-              <View key={goal.id} style={styles.itemCard}>
+              <GradientCard
+                key={goal.id}
+                colors={['#E8D5FF', '#D5C6FF', '#C6B7FF']}
+                style={styles.itemCard}
+              >
                 {editingGoalId === goal.id ? (
                   <View>
                     <TextInput
@@ -274,6 +287,8 @@ export function GoalsAffirmationsScreen({ navigation }: any) {
                       onChangeText={setEditText}
                       multiline
                       autoFocus
+                      placeholder="Enter your goal..."
+                      placeholderTextColor="#999"
                       accessibilityLabel="Edit goal text"
                     />
                     <View style={styles.editButtons}>
@@ -283,6 +298,7 @@ export function GoalsAffirmationsScreen({ navigation }: any) {
                         accessibilityRole="button"
                         accessibilityLabel="Save goal changes"
                       >
+                        <Ionicons name="checkmark" size={20} color="#fff" />
                         <Text style={styles.saveButtonText}>Save</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -296,41 +312,64 @@ export function GoalsAffirmationsScreen({ navigation }: any) {
                     </View>
                   </View>
                 ) : (
-                  <View>
+                  <View style={styles.itemRow}>
                     <TouchableOpacity
                       onPress={() => startEditingGoal(goal)}
-                      onLongPress={() => deleteGoal(goal.id)}
                       accessibilityRole="button"
                       accessibilityLabel={`Goal: ${goal.text}`}
-                      accessibilityHint="Tap to edit, long press to delete"
+                      accessibilityHint="Tap to edit"
+                      style={styles.itemContentTouchable}
                     >
-                      <Text style={styles.itemText}>{goal.text}</Text>
+                      <View style={styles.itemContent}>
+                        <Ionicons name="flag" size={18} color="#6B4CE6" style={styles.itemIcon} />
+                        <Text style={styles.itemText}>{goal.text}</Text>
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => deleteGoal(goal.id)}
+                      style={styles.deleteButton}
+                      accessibilityRole="button"
+                      accessibilityLabel="Delete goal"
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
                     </TouchableOpacity>
                   </View>
                 )}
-              </View>
+              </GradientCard>
             ))
           )}
         </View>
 
+        {/* Affirmations Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Affirmations</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="sparkles" size={24} color="#6B4CE6" />
+              <Text style={styles.sectionTitle}>Affirmations</Text>
+            </View>
             <TouchableOpacity
               onPress={handleAddAffirmation}
               style={styles.addButton}
               accessibilityRole="button"
               accessibilityLabel="Add new affirmation"
             >
-              <Text style={styles.addButtonText}>+ Add</Text>
+              <Ionicons name="add" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
 
           {affirmations.length === 0 ? (
-            <Text style={styles.emptyText}>No affirmations yet. Add one to get started!</Text>
+            <View style={styles.emptyCard}>
+              <Ionicons name="sparkles-outline" size={48} color="#E0E0E0" />
+              <Text style={styles.emptyTitle}>No affirmations yet</Text>
+              <Text style={styles.emptyText}>Start with a positive thought</Text>
+            </View>
           ) : (
             affirmations.map(affirmation => (
-              <View key={affirmation.id} style={styles.itemCard}>
+              <GradientCard
+                key={affirmation.id}
+                colors={['#FFE5D9', '#FFD7C4', '#FFC9AF']}
+                style={styles.itemCard}
+              >
                 {editingAffirmationId === affirmation.id ? (
                   <View>
                     <TextInput
@@ -339,6 +378,8 @@ export function GoalsAffirmationsScreen({ navigation }: any) {
                       onChangeText={setEditText}
                       multiline
                       autoFocus
+                      placeholder="Enter your affirmation..."
+                      placeholderTextColor="#999"
                       accessibilityLabel="Edit affirmation text"
                     />
                     <View style={styles.editButtons}>
@@ -348,6 +389,7 @@ export function GoalsAffirmationsScreen({ navigation }: any) {
                         accessibilityRole="button"
                         accessibilityLabel="Save affirmation changes"
                       >
+                        <Ionicons name="checkmark" size={20} color="#fff" />
                         <Text style={styles.saveButtonText}>Save</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -361,21 +403,43 @@ export function GoalsAffirmationsScreen({ navigation }: any) {
                     </View>
                   </View>
                 ) : (
-                  <View>
+                  <View style={styles.itemRow}>
                     <TouchableOpacity
                       onPress={() => startEditingAffirmation(affirmation)}
-                      onLongPress={() => deleteAffirmation(affirmation.id)}
                       accessibilityRole="button"
                       accessibilityLabel={`Affirmation: ${affirmation.text}`}
-                      accessibilityHint="Tap to edit, long press to delete"
+                      accessibilityHint="Tap to edit"
+                      style={styles.itemContentTouchable}
                     >
-                      <Text style={styles.itemText}>{affirmation.text}</Text>
+                      <View style={styles.itemContent}>
+                        <Ionicons name="sparkles" size={18} color="#6B4CE6" style={styles.itemIcon} />
+                        <Text style={styles.itemText}>{affirmation.text}</Text>
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => deleteAffirmation(affirmation.id)}
+                      style={styles.deleteButton}
+                      accessibilityRole="button"
+                      accessibilityLabel="Delete affirmation"
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
                     </TouchableOpacity>
                   </View>
                 )}
-              </View>
+              </GradientCard>
             ))
           )}
+        </View>
+
+        {/* Info Card */}
+        <View style={styles.infoCard}>
+          <Ionicons name="information-circle" size={24} color="#6B4CE6" />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoTitle}>How it works</Text>
+            <Text style={styles.infoText}>
+              Your goals and affirmations will be used during alarm wake-up challenges to help you start your day with intention.
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -385,107 +449,166 @@ export function GoalsAffirmationsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FAFAFA',
   },
-  header: {
-    flexDirection: 'row',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  backButton: {
-    marginRight: 16,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#4CAF50',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a2e',
   },
   loadingText: {
     fontSize: 18,
     color: '#666',
     textAlign: 'center',
-    marginTop: 40,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: 20,
+    paddingBottom: 40,
   },
+  // Header Styles
+  header: {
+    marginBottom: 28,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#2D2D2D',
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#7D7D7D',
+    lineHeight: 22,
+  },
+  // Section Styles
   section: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   sectionTitle: {
     fontSize: 22,
-    fontWeight: '600',
-    color: '#1a1a2e',
+    fontWeight: '700',
+    color: '#2D2D2D',
   },
   addButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#6B4CE6',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#6B4CE6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  // Empty State Styles
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  emptyTitle: {
+    fontSize: 18,
     fontWeight: '600',
+    color: '#5D5D5D',
+    marginTop: 16,
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#999',
+    fontSize: 14,
+    color: '#9D9D9D',
     textAlign: 'center',
-    paddingVertical: 32,
   },
+  // Item Card Styles
   itemCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  itemContentTouchable: {
+    flex: 1,
+  },
+  itemContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  itemIcon: {
+    marginRight: 10,
+    marginTop: 2,
   },
   itemText: {
+    flex: 1,
     fontSize: 16,
-    color: '#1a1a2e',
+    color: '#2D2D2D',
     lineHeight: 24,
+    fontWeight: '500',
   },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Edit Mode Styles
   editInput: {
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderWidth: 2,
+    borderColor: '#6B4CE6',
+    borderRadius: 12,
+    padding: 14,
     fontSize: 16,
-    minHeight: 80,
+    color: '#2D2D2D',
+    minHeight: 100,
     textAlignVertical: 'top',
   },
   editButtons: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginTop: 12,
   },
   saveButton: {
     flex: 1,
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: '#6B4CE6',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    shadowColor: '#6B4CE6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   saveButtonText: {
     color: '#fff',
@@ -494,14 +617,42 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 12,
+    padding: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   cancelButtonText: {
-    color: '#666',
+    color: '#5D5D5D',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Info Card Styles
+  infoCard: {
+    backgroundColor: '#F5F0FF',
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#E8DBFF',
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2D2D2D',
+    marginBottom: 6,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#5D5D5D',
+    lineHeight: 20,
   },
 });

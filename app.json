@@ -48,6 +48,9 @@
     },
     "plugins": [
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "openaiApiKey": "${OPENAI_API_KEY}"
+    }
   }
 }

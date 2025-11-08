@@ -13,6 +13,7 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       timezone TEXT NOT NULL,
+      onboarding_completed INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     );
 
@@ -82,7 +83,8 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
       stt_mode TEXT NOT NULL DEFAULT 'onDevice',
       challenge_word_count INTEGER NOT NULL DEFAULT 1,
       min_similarity REAL NOT NULL DEFAULT 0.72,
-      ambient_threshold_db REAL NOT NULL DEFAULT -40.0
+      ambient_threshold_db REAL NOT NULL DEFAULT -40.0,
+      use_24_hour_time INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE INDEX IF NOT EXISTS idx_alarms_enabled ON alarms(enabled);
@@ -93,6 +95,8 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
   `);
 
   await ensureColumn(db, 'alarm_runs', 'anti_cheat_token', 'TEXT');
+  await ensureColumn(db, 'settings', 'use_24_hour_time', 'INTEGER NOT NULL DEFAULT 0');
+  await ensureColumn(db, 'user_profiles', 'onboarding_completed', 'INTEGER NOT NULL DEFAULT 0');
 
   return db;
 }
@@ -103,9 +107,9 @@ export async function getOrCreateDefaultSettings(db: SQLite.SQLiteDatabase): Pro
   if (!result) {
     const id = `settings_${Date.now()}`;
     await db.runAsync(
-      `INSERT INTO settings (id, stt_mode, challenge_word_count, min_similarity, ambient_threshold_db)
-       VALUES (?, ?, ?, ?, ?)`,
-      [id, 'onDevice', 1, 0.72, -40.0]
+      `INSERT INTO settings (id, stt_mode, challenge_word_count, min_similarity, ambient_threshold_db, use_24_hour_time)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, 'onDevice', 1, 0.72, -40.0, 0]
     );
     return await db.getFirstAsync('SELECT * FROM settings WHERE id = ?', [id]);
   }

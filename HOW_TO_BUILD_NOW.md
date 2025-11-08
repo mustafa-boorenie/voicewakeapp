@@ -82,7 +82,7 @@ LOG  ✅ Alarm listener registered
 ```
 
 **NOT:**
-```
+````
 ERROR  ❌ Failed to load AlarmScheduler native module
 ```
 

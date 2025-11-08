@@ -1,7 +1,6 @@
 import Expo
 import React
 import ReactAppDependencyProvider
-import UserNotifications
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -29,8 +28,6 @@ public class AppDelegate: ExpoAppDelegate {
       in: window,
       launchOptions: launchOptions)
 #endif
-
-    AlarmNotificationDelegate.shared.configure()
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
