@@ -8,46 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		22C3DEFA781F0D8F0AFCE009 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = ED2C545E01E65F8B9319F78A /* PrivacyInfo.xcprivacy */; };
-		2C4398931AB9DBE13E1AA1E8 /* SpeechRecognizerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 8C7D749B2BE8BA984ABB34B9 /* SpeechRecognizerBridge.m */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		53735F04BDED9E97039C6C36 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9401F97025BCCE7EAE912CD2 /* ExpoModulesProvider.swift */; };
-		5845E89796D185A7BDCCE0EC /* SpeechRecognizerModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80F5A6009D3025FDB90B6F5 /* SpeechRecognizerModule.swift */; };
-		8045D47A5CEFD9B54090E4D1 /* AlarmSchedulerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 83895DBEC710791B3BCEA04F /* AlarmSchedulerBridge.m */; };
-		974EF53A357BB6A6379966DD /* libPods-AffirmationAlarm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0C41C11C1DB8779189504E0B /* libPods-AffirmationAlarm.a */; };
+		40E2771FC92806511CCE3158 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BA46D3EE42263C8E182AC44B /* PrivacyInfo.xcprivacy */; };
+		765C8236A14C601144883379 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F14FB3ACF1057C5C4A03EA2 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E228905DA3979D5FE7FEE9B2 /* AlarmKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28659E3193CDDDE09E34F139 /* AlarmKitBridge.swift */; };
+		BBC91EFD9C8C04FCB0F54FCB /* libPods-AffirmationAlarm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DD33EE50B0AD95933FE6ADC1 /* libPods-AffirmationAlarm.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F1A1A0062F8844D500E0A001 /* AlarmSchedulerModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A1A0052F8844D500E0A001 /* AlarmSchedulerModule.swift */; };
-		F1A1A0082F8844D500E0A001 /* AlarmSchedulerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A1A0072F8844D500E0A001 /* AlarmSchedulerStore.swift */; };
-		F1A1A00A2F8844D500E0A001 /* AlarmNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A1A0092F8844D500E0A001 /* AlarmNotificationDelegate.swift */; };
-		F1A1A00C2F8844D500E0A001 /* LocalNotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A1A00B2F8844D500E0A001 /* LocalNotificationScheduler.swift */; };
-		F1A1A00E2F8844D500E0A001 /* AlarmSchedulerNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A1A00D2F8844D500E0A001 /* AlarmSchedulerNotifications.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0C41C11C1DB8779189504E0B /* libPods-AffirmationAlarm.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-AffirmationAlarm.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* AffirmationAlarm.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AffirmationAlarm.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = AffirmationAlarm/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = AffirmationAlarm/Info.plist; sourceTree = "<group>"; };
-		221BFC00B26F9F2E914C5C5A /* Pods-AffirmationAlarm.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AffirmationAlarm.release.xcconfig"; path = "Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm.release.xcconfig"; sourceTree = "<group>"; };
-		28659E3193CDDDE09E34F139 /* AlarmKitBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlarmKitBridge.swift; sourceTree = "<group>"; };
-		81DD86B8822AFB0884151D2C /* Pods-AffirmationAlarm.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AffirmationAlarm.debug.xcconfig"; path = "Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm.debug.xcconfig"; sourceTree = "<group>"; };
-		83895DBEC710791B3BCEA04F /* AlarmSchedulerBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = AlarmSchedulerBridge.m; sourceTree = "<group>"; };
-		8C7D749B2BE8BA984ABB34B9 /* SpeechRecognizerBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = SpeechRecognizerBridge.m; path = AffirmationAlarm/SpeechRecognizerBridge.m; sourceTree = "<group>"; };
-		9401F97025BCCE7EAE912CD2 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-AffirmationAlarm/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		7F14FB3ACF1057C5C4A03EA2 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-AffirmationAlarm/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = AffirmationAlarm/SplashScreen.storyboard; sourceTree = "<group>"; };
+		BA46D3EE42263C8E182AC44B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = AffirmationAlarm/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E80F5A6009D3025FDB90B6F5 /* SpeechRecognizerModule.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SpeechRecognizerModule.swift; path = AffirmationAlarm/SpeechRecognizerModule.swift; sourceTree = "<group>"; };
+		DD33EE50B0AD95933FE6ADC1 /* libPods-AffirmationAlarm.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-AffirmationAlarm.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E25AFCA6A6835C2F11BD5313 /* Pods-AffirmationAlarm.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AffirmationAlarm.release.xcconfig"; path = "Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		ED2C545E01E65F8B9319F78A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = AffirmationAlarm/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = AffirmationAlarm/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* AffirmationAlarm-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "AffirmationAlarm-Bridging-Header.h"; path = "AffirmationAlarm/AffirmationAlarm-Bridging-Header.h"; sourceTree = "<group>"; };
-		F1A1A0052F8844D500E0A001 /* AlarmSchedulerModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSchedulerModule.swift; sourceTree = "<group>"; };
-		F1A1A0072F8844D500E0A001 /* AlarmSchedulerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSchedulerStore.swift; sourceTree = "<group>"; };
-		F1A1A0092F8844D500E0A001 /* AlarmNotificationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmNotificationDelegate.swift; sourceTree = "<group>"; };
-		F1A1A00B2F8844D500E0A001 /* LocalNotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNotificationScheduler.swift; sourceTree = "<group>"; };
-		F1A1A00D2F8844D500E0A001 /* AlarmSchedulerNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSchedulerNotifications.swift; sourceTree = "<group>"; };
+		FCC6591ED7409426C9B1DB47 /* Pods-AffirmationAlarm.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AffirmationAlarm.debug.xcconfig"; path = "Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,54 +37,52 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				974EF53A357BB6A6379966DD /* libPods-AffirmationAlarm.a in Frameworks */,
+				BBC91EFD9C8C04FCB0F54FCB /* libPods-AffirmationAlarm.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		10FCD42740600A0DD0BC8131 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				FCC6591ED7409426C9B1DB47 /* Pods-AffirmationAlarm.debug.xcconfig */,
+				E25AFCA6A6835C2F11BD5313 /* Pods-AffirmationAlarm.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* AffirmationAlarm */ = {
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
 				F11748442D0722820044C1D9 /* AffirmationAlarm-Bridging-Header.h */,
-				F1A1A0042F8844D500E0A001 /* Alarms */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				E80F5A6009D3025FDB90B6F5 /* SpeechRecognizerModule.swift */,
-				8C7D749B2BE8BA984ABB34B9 /* SpeechRecognizerBridge.m */,
-				ED2C545E01E65F8B9319F78A /* PrivacyInfo.xcprivacy */,
+				BA46D3EE42263C8E182AC44B /* PrivacyInfo.xcprivacy */,
 			);
 			name = AffirmationAlarm;
-			sourceTree = "<group>";
-		};
-		1C23B3B406CE1E7368CCCE98 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				F44A77BF05C31DF7416A7DF2 /* AffirmationAlarm */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				0C41C11C1DB8779189504E0B /* libPods-AffirmationAlarm.a */,
+				DD33EE50B0AD95933FE6ADC1 /* libPods-AffirmationAlarm.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		375907803505DD58CA8761B0 /* Pods */ = {
+		44DEACD49854A58E153BB556 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				81DD86B8822AFB0884151D2C /* Pods-AffirmationAlarm.debug.xcconfig */,
-				221BFC00B26F9F2E914C5C5A /* Pods-AffirmationAlarm.release.xcconfig */,
+				EAEE9740247AEBDCE9FF8F97 /* AffirmationAlarm */,
 			);
-			path = Pods;
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -119,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				375907803505DD58CA8761B0 /* Pods */,
-				1C23B3B406CE1E7368CCCE98 /* ExpoModulesProviders */,
+				10FCD42740600A0DD0BC8131 /* Pods */,
+				44DEACD49854A58E153BB556 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -144,24 +124,10 @@
 			path = AffirmationAlarm/Supporting;
 			sourceTree = "<group>";
 		};
-		F1A1A0042F8844D500E0A001 /* Alarms */ = {
+		EAEE9740247AEBDCE9FF8F97 /* AffirmationAlarm */ = {
 			isa = PBXGroup;
 			children = (
-				F1A1A0052F8844D500E0A001 /* AlarmSchedulerModule.swift */,
-				F1A1A0072F8844D500E0A001 /* AlarmSchedulerStore.swift */,
-				F1A1A0092F8844D500E0A001 /* AlarmNotificationDelegate.swift */,
-				F1A1A00B2F8844D500E0A001 /* LocalNotificationScheduler.swift */,
-				F1A1A00D2F8844D500E0A001 /* AlarmSchedulerNotifications.swift */,
-				83895DBEC710791B3BCEA04F /* AlarmSchedulerBridge.m */,
-				28659E3193CDDDE09E34F139 /* AlarmKitBridge.swift */,
-			);
-			path = AffirmationAlarm/Alarms;
-			sourceTree = "<group>";
-		};
-		F44A77BF05C31DF7416A7DF2 /* AffirmationAlarm */ = {
-			isa = PBXGroup;
-			children = (
-				9401F97025BCCE7EAE912CD2 /* ExpoModulesProvider.swift */,
+				7F14FB3ACF1057C5C4A03EA2 /* ExpoModulesProvider.swift */,
 			);
 			name = AffirmationAlarm;
 			sourceTree = "<group>";
@@ -174,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "AffirmationAlarm" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				5AC6B40590A8F14699C1C051 /* [Expo] Configure project */,
+				2A86DD33DD83C4598D357E8C /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				C8C6A562D978105B8B0F3E36 /* [CP] Embed Pods Frameworks */,
+				29FE7DEAD6B40708AAC03529 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -230,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				22C3DEFA781F0D8F0AFCE009 /* PrivacyInfo.xcprivacy in Resources */,
+				40E2771FC92806511CCE3158 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -276,7 +242,29 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		5AC6B40590A8F14699C1C051 /* [Expo] Configure project */ = {
+		29FE7DEAD6B40708AAC03529 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		2A86DD33DD83C4598D357E8C /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -328,28 +316,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C8C6A562D978105B8B0F3E36 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-AffirmationAlarm/Pods-AffirmationAlarm-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -358,16 +324,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				F1A1A0062F8844D500E0A001 /* AlarmSchedulerModule.swift in Sources */,
-				F1A1A0082F8844D500E0A001 /* AlarmSchedulerStore.swift in Sources */,
-				F1A1A00A2F8844D500E0A001 /* AlarmNotificationDelegate.swift in Sources */,
-				F1A1A00C2F8844D500E0A001 /* LocalNotificationScheduler.swift in Sources */,
-				F1A1A00E2F8844D500E0A001 /* AlarmSchedulerNotifications.swift in Sources */,
-				8045D47A5CEFD9B54090E4D1 /* AlarmSchedulerBridge.m in Sources */,
-				5845E89796D185A7BDCCE0EC /* SpeechRecognizerModule.swift in Sources */,
-				2C4398931AB9DBE13E1AA1E8 /* SpeechRecognizerBridge.m in Sources */,
-				E228905DA3979D5FE7FEE9B2 /* AlarmKitBridge.swift in Sources */,
-				53735F04BDED9E97039C6C36 /* ExpoModulesProvider.swift in Sources */,
+				765C8236A14C601144883379 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,13 +333,12 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 81DD86B8822AFB0884151D2C /* Pods-AffirmationAlarm.debug.xcconfig */;
+			baseConfigurationReference = FCC6591ED7409426C9B1DB47 /* Pods-AffirmationAlarm.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = AffirmationAlarm/AffirmationAlarm.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = D86BX62AKF;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -413,13 +369,12 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 221BFC00B26F9F2E914C5C5A /* Pods-AffirmationAlarm.release.xcconfig */;
+			baseConfigurationReference = E25AFCA6A6835C2F11BD5313 /* Pods-AffirmationAlarm.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = AffirmationAlarm/AffirmationAlarm.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = D86BX62AKF;
 				INFOPLIST_FILE = AffirmationAlarm/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -2,6 +2,7 @@ export interface UserProfile {
   id: string;
   name: string;
   timezone: string;
+  onboardingCompleted: boolean;
   createdAt: string;
 }
 
@@ -80,6 +81,7 @@ export interface Settings {
   challengeWordCount: number;
   minSimilarity: number;
   ambientThresholdDb: number;
+  use24HourTime: boolean;
 }
 
 export interface VerificationInput {
@@ -121,3 +123,21 @@ export interface MIOnboardingData {
   goalLines: string[];
   affirmationLines: string[];
 }
+
+export interface GeneratedContent {
+  goals: string[];
+  affirmations: string[];
+}
+
+export interface OnboardingState {
+  step: number;
+  data: Partial<MIOnboardingData>;
+  generatedContent?: GeneratedContent;
+  isGenerating: boolean;
+  permissionsGranted: boolean;
+}
+
+export type PermissionStatus = {
+  notifications: boolean;
+  exactAlarms: boolean;
+};

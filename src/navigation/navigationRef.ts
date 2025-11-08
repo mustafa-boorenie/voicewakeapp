@@ -1,7 +1,11 @@
 import { createNavigationContainerRef } from '@react-navigation/native';
 
 export type RootStackParamList = {
+  MainTabs: undefined;
   Home: undefined;
+  Alarm: undefined;
+  Goals: undefined;
+  Settings: undefined;
   MIOnboarding: undefined;
   AlarmTrigger: {
     alarmId: string;

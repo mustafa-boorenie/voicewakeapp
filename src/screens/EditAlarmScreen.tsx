@@ -8,20 +8,25 @@ import {
   TextInput,
   Switch,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { initDatabase } from '../db/schema';
 import { Alarm } from '../types';
 import { alarmScheduler } from '../modules/alarm/AlarmScheduler';
+import { GradientCard } from '../components/GradientCard';
+import { SoundPickerModal, ALARM_SOUNDS } from '../components/SoundPickerModal';
+import { SnoozePickerModal } from '../components/SnoozePickerModal';
 
 const DAYS_OF_WEEK = [
-  { id: 0, label: 'Sun' },
-  { id: 1, label: 'Mon' },
-  { id: 2, label: 'Tue' },
-  { id: 3, label: 'Wed' },
-  { id: 4, label: 'Thu' },
-  { id: 5, label: 'Fri' },
-  { id: 6, label: 'Sat' },
+  { id: 1, label: 'MON', short: '3' },
+  { id: 2, label: 'TUE', short: '4' },
+  { id: 3, label: 'WED', short: '5' },
+  { id: 4, label: 'THU', short: '6' },
+  { id: 5, label: 'FRI', short: '7' },
+  { id: 6, label: 'SAT', short: '8' },
+  { id: 0, label: 'SUN', short: '9' },
 ];
 
 export function EditAlarmScreen({ route, navigation }: any) {
@@ -29,13 +34,19 @@ export function EditAlarmScreen({ route, navigation }: any) {
   
   const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState('');
-  const [hour, setHour] = useState('07');
-  const [minute, setMinute] = useState('00');
+  const initialTime = new Date();
+  initialTime.setHours(6);
+  initialTime.setMinutes(0);
+  const [selectedTime, setSelectedTime] = useState(initialTime);
+  const [use24Hour, setUse24Hour] = useState(false);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [volume, setVolume] = useState(0.8);
   const [vibrate, setVibrate] = useState(true);
+  const [selectedSound, setSelectedSound] = useState('default');
+  const [showSoundPicker, setShowSoundPicker] = useState(false);
   const [maxSnoozes, setMaxSnoozes] = useState(3);
   const [snoozeLengthMin, setSnoozeLengthMin] = useState(9);
+  const [showSnoozePicker, setShowSnoozePicker] = useState(false);
   const [requireAffirmations, setRequireAffirmations] = useState(true);
   const [requireGoals, setRequireGoals] = useState(true);
   const [randomChallenge, setRandomChallenge] = useState(false);
@@ -43,7 +54,31 @@ export function EditAlarmScreen({ route, navigation }: any) {
 
   useEffect(() => {
     loadAlarm();
-  }, []);
+    loadSettings();
+    
+    // Reload settings when screen comes into focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadSettings();
+    });
+    
+    return unsubscribe;
+  }, [navigation]);
+
+  const loadSettings = async () => {
+    try {
+      const db = await initDatabase();
+      const settings = await db.getFirstAsync('SELECT * FROM settings LIMIT 1') as any;
+      if (settings) {
+        const is24Hour = settings.use_24_hour_time === 1;
+        console.log('📅 EditAlarmScreen: Loading time format setting:', is24Hour ? '24-hour' : '12-hour (AM/PM)');
+        setUse24Hour(is24Hour);
+      } else {
+        console.log('📅 EditAlarmScreen: No settings found, using default 12-hour format');
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
 
   const loadAlarm = async () => {
     try {
@@ -55,12 +90,16 @@ export function EditAlarmScreen({ route, navigation }: any) {
 
       if (result) {
         setLabel(result.label);
+        // Convert time_local to Date object
         const [h, m] = result.time_local.split(':');
-        setHour(h);
-        setMinute(m);
+        const time = new Date();
+        time.setHours(parseInt(h, 10));
+        time.setMinutes(parseInt(m, 10));
+        setSelectedTime(time);
         setSelectedDays(JSON.parse(result.days_of_week));
         setVolume(result.volume);
         setVibrate(result.vibrate === 1);
+        setSelectedSound(result.tone_uri || 'default');
         setMaxSnoozes(result.max_snoozes);
         setSnoozeLengthMin(result.snooze_length_min);
         setRequireAffirmations(result.require_affirmations === 1);
@@ -91,19 +130,6 @@ export function EditAlarmScreen({ route, navigation }: any) {
   const handleSave = async () => {
     if (!label.trim()) {
       Alert.alert('Error', 'Please enter an alarm label');
-      return;
-    }
-
-    const hourNum = parseInt(hour, 10);
-    const minuteNum = parseInt(minute, 10);
-
-    if (isNaN(hourNum) || hourNum < 0 || hourNum > 23) {
-      Alert.alert('Error', 'Hour must be between 0 and 23');
-      return;
-    }
-
-    if (isNaN(minuteNum) || minuteNum < 0 || minuteNum > 59) {
-      Alert.alert('Error', 'Minute must be between 0 and 59');
       return;
     }
 
@@ -163,11 +189,14 @@ export function EditAlarmScreen({ route, navigation }: any) {
 
     try {
       const db = await initDatabase();
-      const timeLocal = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+      // Convert selectedTime to HH:MM format
+      const hours = selectedTime.getHours().toString().padStart(2, '0');
+      const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
+      const timeLocal = `${hours}:${minutes}`;
 
       await db.runAsync(
         `UPDATE alarms SET
-          label = ?, time_local = ?, days_of_week = ?, volume = ?,
+          label = ?, time_local = ?, days_of_week = ?, volume = ?, tone_uri = ?,
           vibrate = ?, max_snoozes = ?, snooze_length_min = ?,
           require_affirmations = ?, require_goals = ?, random_challenge = ?,
           enabled = ?
@@ -177,6 +206,7 @@ export function EditAlarmScreen({ route, navigation }: any) {
           timeLocal,
           JSON.stringify(selectedDays),
           volume,
+          selectedSound,
           vibrate ? 1 : 0,
           maxSnoozes,
           snoozeLengthMin,
@@ -202,7 +232,7 @@ export function EditAlarmScreen({ route, navigation }: any) {
             timeLocal,
             daysOfWeek: selectedDays,
             volume,
-            toneUri: 'default',
+            toneUri: selectedSound,
             vibrate,
             maxSnoozes,
             snoozeLengthMin,
@@ -306,217 +336,206 @@ export function EditAlarmScreen({ route, navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.title} accessibilityRole="header">
-          Edit Alarm
-        </Text>
-      </View>
-
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.section}>
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Alarm Enabled</Text>
-            <Switch
-              value={enabled}
-              onValueChange={setEnabled}
-              accessibilityLabel="Alarm enabled toggle"
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Alarm Label</Text>
-          <TextInput
-            style={styles.textInput}
-            value={label}
-            onChangeText={setLabel}
-            placeholder="Enter alarm name"
-            accessibilityLabel="Alarm label input"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Time</Text>
-          <View style={styles.timeInputContainer}>
-            <TextInput
-              style={styles.timeInput}
-              value={hour}
-              onChangeText={setHour}
-              keyboardType="number-pad"
-              maxLength={2}
-              placeholder="HH"
-              accessibilityLabel="Hour input"
-            />
-            <Text style={styles.timeSeparator}>:</Text>
-            <TextInput
-              style={styles.timeInput}
-              value={minute}
-              onChangeText={setMinute}
-              keyboardType="number-pad"
-              maxLength={2}
-              placeholder="MM"
-              accessibilityLabel="Minute input"
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Repeat on Days</Text>
+        {/* Days of Week Selector */}
+        <View style={styles.daysSection}>
           <View style={styles.daysContainer}>
             {DAYS_OF_WEEK.map(day => (
               <TouchableOpacity
                 key={day.id}
-                style={[
-                  styles.dayButton,
-                  selectedDays.includes(day.id) && styles.dayButtonActive,
-                ]}
+                style={styles.dayButtonWrapper}
                 onPress={() => toggleDay(day.id)}
                 accessibilityRole="button"
                 accessibilityLabel={`${day.label}, ${selectedDays.includes(day.id) ? 'selected' : 'not selected'}`}
-                accessibilityHint="Tap to toggle this day"
+              >
+                <Text style={styles.dayLabel}>{day.label}</Text>
+                <View
+                  style={[
+                    styles.dayButton,
+                    selectedDays.includes(day.id) && styles.dayButtonActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dayButtonText,
+                      selectedDays.includes(day.id) && styles.dayButtonTextActive,
+                    ]}
+                  >
+                    {day.short}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Alarm Preview Card */}
+        <GradientCard style={styles.alarmCard}>
+          <View style={styles.alarmCardContent}>
+            <View>
+              <Text style={styles.alarmLabel}>{label}</Text>
+              <Text style={styles.alarmTime}>
+                {selectedTime.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: !use24Hour
+                })}
+              </Text>
+            </View>
+            <View style={styles.alarmCardRight}>
+              <Text style={styles.bellIcon}>🔔</Text>
+              <Switch
+                value={enabled}
+                onValueChange={setEnabled}
+                trackColor={{ false: '#ddd', true: '#333' }}
+                thumbColor="#fff"
+              />
+            </View>
+          </View>
+        </GradientCard>
+
+        {/* Set Time Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.clockIcon}>🕐</Text>
+            <Text style={styles.sectionTitle}>Set Time</Text>
+          </View>
+          <DateTimePicker
+            value={selectedTime}
+            mode="time"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(event, date) => {
+              if (date) {
+                setSelectedTime(date);
+              }
+            }}
+            is24Hour={use24Hour}
+            style={styles.timePicker}
+          />
+        </View>
+
+        {/* Vibration Section */}
+        <View style={styles.section}>
+          <View style={styles.optionRow}>
+            <View style={styles.optionLeft}>
+              <Text style={styles.vibrationIcon}>📳</Text>
+              <Text style={styles.optionLabel}>Vibration</Text>
+            </View>
+            <Switch
+              value={vibrate}
+              onValueChange={setVibrate}
+              trackColor={{ false: '#ddd', true: '#7C3AED' }}
+              thumbColor="#fff"
+            />
+          </View>
+        </View>
+
+        {/* Alarm Sound Section */}
+        <View style={styles.section}>
+          <View style={styles.optionHeader}>
+            <Text style={styles.soundIcon}>🔊</Text>
+            <Text style={styles.optionLabel}>Alarm Sound</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.dropdown}
+            onPress={() => setShowSoundPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Select alarm sound"
+          >
+            <Text style={styles.dropdownText}>
+              {ALARM_SOUNDS.find(s => s.value === selectedSound)?.label || 'Gentle Chime'}
+            </Text>
+            <Text style={styles.dropdownArrow}>▼</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Snooze Options Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.snoozeIcon}>⏰</Text>
+            <Text style={styles.sectionTitle}>Snooze Options</Text>
+          </View>
+          
+          <Text style={styles.label}>Number of snoozes</Text>
+          <View style={styles.numberButtonGroup}>
+            {[0, 1, 2, 3].map(num => (
+              <TouchableOpacity
+                key={num}
+                style={[
+                  styles.numberButton,
+                  maxSnoozes === num && styles.numberButtonActive,
+                ]}
+                onPress={() => setMaxSnoozes(num)}
+                accessibilityRole="button"
               >
                 <Text
                   style={[
-                    styles.dayButtonText,
-                    selectedDays.includes(day.id) && styles.dayButtonTextActive,
+                    styles.numberButtonText,
+                    maxSnoozes === num && styles.numberButtonTextActive,
                   ]}
                 >
-                  {day.label}
+                  {num}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
+
+          <Text style={styles.label}>Snooze length</Text>
+          <TouchableOpacity
+            style={styles.dropdown}
+            onPress={() => setShowSnoozePicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Select snooze length"
+          >
+            <Text style={styles.dropdownText}>{snoozeLengthMin} minutes</Text>
+            <Text style={styles.dropdownArrow}>▼</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Vibrate</Text>
-            <Switch
-              value={vibrate}
-              onValueChange={setVibrate}
-              accessibilityLabel="Vibrate toggle"
-            />
-          </View>
+        {/* Hidden Advanced Options */}
+        <View style={{ display: 'none' }}>
+          <Switch value={requireAffirmations} onValueChange={setRequireAffirmations} />
+          <Switch value={requireGoals} onValueChange={setRequireGoals} />
+          <Switch value={randomChallenge} onValueChange={setRandomChallenge} />
+          <TextInput value={label} onChangeText={setLabel} />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Volume: {Math.round(volume * 100)}%</Text>
-          <View style={styles.sliderContainer}>
-            {[0, 0.25, 0.5, 0.75, 1.0].map(val => (
-              <TouchableOpacity
-                key={val}
-                style={[
-                  styles.volumeButton,
-                  volume === val && styles.volumeButtonActive,
-                ]}
-                onPress={() => setVolume(val)}
-                accessibilityRole="button"
-                accessibilityLabel={`Set volume to ${Math.round(val * 100)} percent`}
-              >
-                <Text style={styles.volumeButtonText}>{Math.round(val * 100)}%</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Snooze Settings</Text>
-          <View style={styles.snoozeRow}>
-            <Text style={styles.label}>Max Snoozes:</Text>
-            <View style={styles.numberButtonGroup}>
-              {[0, 1, 2, 3, 5].map(num => (
-                <TouchableOpacity
-                  key={num}
-                  style={[
-                    styles.numberButton,
-                    maxSnoozes === num && styles.numberButtonActive,
-                  ]}
-                  onPress={() => setMaxSnoozes(num)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Set maximum snoozes to ${num}`}
-                >
-                  <Text style={styles.numberButtonText}>{num}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          <View style={styles.snoozeRow}>
-            <Text style={styles.label}>Snooze Length (min):</Text>
-            <View style={styles.numberButtonGroup}>
-              {[5, 9, 10, 15].map(num => (
-                <TouchableOpacity
-                  key={num}
-                  style={[
-                    styles.numberButton,
-                    snoozeLengthMin === num && styles.numberButtonActive,
-                  ]}
-                  onPress={() => setSnoozeLengthMin(num)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Set snooze length to ${num} minutes`}
-                >
-                  <Text style={styles.numberButtonText}>{num}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Wake-up Requirements</Text>
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Require Affirmations</Text>
-            <Switch
-              value={requireAffirmations}
-              onValueChange={setRequireAffirmations}
-              accessibilityLabel="Require affirmations toggle"
-            />
-          </View>
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Require Goals</Text>
-            <Switch
-              value={requireGoals}
-              onValueChange={setRequireGoals}
-              accessibilityLabel="Require goals toggle"
-            />
-          </View>
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Random Challenge Word</Text>
-            <Switch
-              value={randomChallenge}
-              onValueChange={setRandomChallenge}
-              accessibilityLabel="Random challenge word toggle"
-            />
-          </View>
-        </View>
-
+        {/* Save Button */}
         <TouchableOpacity
           style={styles.saveButton}
           onPress={handleSave}
           accessibilityRole="button"
           accessibilityLabel="Save alarm changes"
         >
+          <Text style={styles.bellIconButton}>🔔</Text>
           <Text style={styles.saveButtonText}>Save Changes</Text>
         </TouchableOpacity>
 
+        {/* Delete Button */}
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={handleDelete}
           accessibilityRole="button"
           accessibilityLabel="Delete alarm"
-          accessibilityHint="This will permanently delete the alarm"
         >
-          <Text style={styles.deleteButtonText}>Delete Alarm</Text>
+          <Text style={styles.deleteButtonText}>🗑️ Delete Alarm</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Modals */}
+      <SoundPickerModal
+        visible={showSoundPicker}
+        selectedValue={selectedSound}
+        onSelect={setSelectedSound}
+        onClose={() => setShowSoundPicker(false)}
+      />
+      <SnoozePickerModal
+        visible={showSnoozePicker}
+        selectedValue={snoozeLengthMin}
+        onSelect={setSnoozeLengthMin}
+        onClose={() => setShowSnoozePicker(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -524,27 +543,7 @@ export function EditAlarmScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  backButton: {
-    marginRight: 16,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#4CAF50',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a2e',
+    backgroundColor: '#F0F0F5',
   },
   loadingText: {
     fontSize: 18,
@@ -556,147 +555,237 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: 20,
+    paddingBottom: 100,
   },
-  section: {
+  
+  // Days of Week Section
+  daysSection: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a2e',
-    marginBottom: 12,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  timeInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timeInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 16,
-    fontSize: 32,
-    fontWeight: 'bold',
-    width: 80,
-    textAlign: 'center',
-  },
-  timeSeparator: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginHorizontal: 8,
   },
   daysContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  dayButtonWrapper: {
+    alignItems: 'center',
+  },
+  dayLabel: {
+    fontSize: 10,
+    color: '#666',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
   dayButton: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    borderWidth: 2,
-    borderColor: '#ddd',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
   dayButtonActive: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+    backgroundColor: '#7C3AED',
   },
   dayButtonText: {
     fontSize: 14,
     color: '#666',
+    fontWeight: '600',
   },
   dayButtonTextActive: {
     color: '#fff',
-    fontWeight: 'bold',
   },
-  switchRow: {
+
+  // Alarm Preview Card
+  alarmCard: {
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  alarmCardContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
   },
-  switchLabel: {
-    fontSize: 16,
-    color: '#1a1a2e',
+  alarmLabel: {
+    fontSize: 18,
+    color: '#333',
+    marginBottom: 4,
+    fontWeight: '500',
   },
-  sliderContainer: {
+  alarmTime: {
+    fontSize: 32,
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  alarmCardRight: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
   },
-  volumeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
+  bellIcon: {
+    fontSize: 24,
   },
-  volumeButtonActive: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+
+  // Sections
+  section: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
   },
-  volumeButtonText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  snoozeRow: {
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 16,
-    color: '#1a1a2e',
-    marginBottom: 8,
-  },
-  numberButtonGroup: {
+  sectionHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
     gap: 8,
   },
-  numberButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
-  numberButtonActive: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
+  clockIcon: {
+    fontSize: 20,
   },
-  numberButtonText: {
+  snoozeIcon: {
+    fontSize: 20,
+  },
+
+  // Time Picker
+  timePicker: {
+    marginTop: 8,
+    height: 150,
+    width: '100%',
+  },
+
+  // Option Rows
+  optionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  optionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  optionLabel: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  vibrationIcon: {
+    fontSize: 20,
+  },
+  soundIcon: {
+    fontSize: 20,
+  },
+
+  // Dropdown
+  dropdown: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#999',
+  },
+
+  // Labels
+  label: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 12,
+    marginTop: 16,
   },
-  saveButton: {
-    backgroundColor: '#4CAF50',
+
+  // Number Buttons
+  numberButtonGroup: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 8,
+  },
+  numberButton: {
+    flex: 1,
+    paddingVertical: 16,
     borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  numberButtonActive: {
+    borderColor: '#7C3AED',
+    backgroundColor: '#F5F0FF',
+  },
+  numberButtonText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '600',
+  },
+  numberButtonTextActive: {
+    color: '#7C3AED',
+  },
+
+  // Save Button
+  saveButton: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 16,
     padding: 18,
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  bellIconButton: {
+    fontSize: 20,
   },
   saveButtonText: {
     fontSize: 18,
     fontWeight: '600',
     color: '#fff',
   },
+
+  // Delete Button
   deleteButton: {
-    backgroundColor: '#f44336',
-    borderRadius: 12,
+    backgroundColor: '#FF4757',
+    borderRadius: 16,
     padding: 18,
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
+    shadowColor: '#FF4757',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   deleteButtonText: {
     fontSize: 18,

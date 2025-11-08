@@ -102,3 +102,4 @@ If you still see errors:
 Swift modules in React Native need Objective-C bridge files (`.m` files) that use the `RCT_EXTERN_MODULE` macro to register the module with React Native's bridge. Without these files, JavaScript can't find the native modules.
 
 
+
